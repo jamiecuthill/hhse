@@ -16,7 +16,7 @@ import (
 const LowRatio = 0.2
 const CrashRatio = 0.8
 const PriceIncrement = 0.04
-const ClockPeriodMinutes = 5
+const ClockPeriodMinutes = 1
 
 const TrendUp = "up"
 const TrendDown = "down"
