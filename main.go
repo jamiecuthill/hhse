@@ -179,7 +179,6 @@ func (product *Product) Run() {
 	timer := time.NewTimer(ClockPeriodMinutes * time.Minute)
 	select {
 	case <-timer.C:
-		log.Printf("Decreasing price of %v", product.ID)
 		product.DecrPrice()
 	case <-product.reset:
 	}
