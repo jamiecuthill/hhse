@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"encoding/json"
+	"github.com/rs/cors"
 )
 
 const LowRatio = 0.2
@@ -49,22 +50,6 @@ type pricesResponse struct {
 
 var fakeMenu Menu
 
-func CORSMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-
-		for _, value := range []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"} {
-			w.Header().Add("Access-Control-Allow-Methods", value)
-		}
-
-		for _, value := range []string{"Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"} {
-			w.Header().Add("Access-Control-Allow-Headers", value)
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
 func main() {
 
 	fakeMenu = Menu{
@@ -80,7 +65,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-	})
+	}).Methods(http.MethodGet)
 
 	r.HandleFunc("/menu", func(w http.ResponseWriter, r *http.Request) {
 		var m menuResponse
@@ -94,7 +79,7 @@ func main() {
 
 		w.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(m)
-	})
+	}).Methods(http.MethodGet)
 
 	r.HandleFunc("/prices", func(w http.ResponseWriter, r *http.Request) {
 		var p pricesResponse
@@ -105,9 +90,11 @@ func main() {
 
 		w.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(p)
-	})
+	}).Methods(http.MethodGet)
 
-	err := http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), CORSMiddleware(r))
+	c := cors.AllowAll()
+
+	err := http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), c.Handler(r))
 	if err != nil {
 		log.Fatal(err)
 	}
