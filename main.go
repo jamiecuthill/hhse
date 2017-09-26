@@ -10,6 +10,7 @@ import (
 	"github.com/rs/cors"
 	"math"
 	"time"
+	"sync"
 )
 
 const LowRatio = 0.2
@@ -32,6 +33,7 @@ type Product struct {
 	currentPrice int
 	highPrice    int
 	Trend        string
+	lock         sync.RWMutex
 }
 
 type itemResponse struct {
@@ -71,7 +73,11 @@ type billEventProduct struct {
 
 var fakeMenu Menu
 
-var crash *int
+
+var crash struct{
+	ID  *int
+	lock sync.RWMutex
+}
 
 func main() {
 
@@ -96,10 +102,12 @@ func main() {
 		var m menuResponse
 
 		for _, product := range fakeMenu.Items {
+			product.lock.RLock()
 			m.Items = append(m.Items, itemResponse{
 				ID:   product.ID,
 				Name: product.Name,
 			})
+			product.lock.RUnlock()
 		}
 
 		w.Header().Add("Content-Type", "application/json")
@@ -110,10 +118,14 @@ func main() {
 		var p pricesResponse
 
 		for _, product := range fakeMenu.Items {
+			product.lock.RLock()
 			p.Prices = append(p.Prices, newPriceResp(*product))
+			product.lock.RUnlock()
 		}
 
-		p.Crash = crash
+		crash.lock.RLock()
+		p.Crash = crash.ID
+		crash.lock.RUnlock()
 
 		w.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(p)
@@ -134,9 +146,7 @@ func main() {
 				continue
 			}
 
-			log.Printf("Found product, price: %v", menuProduct.currentPrice)
 			menuProduct.IncrPrice()
-			log.Printf("Incr product, price: %v", menuProduct.currentPrice)
 		}
 
 		w.WriteHeader(http.StatusNoContent)
@@ -180,17 +190,25 @@ func (product *Product) maxPrice() int {
 }
 
 func (product *Product) IncrPrice() {
+	product.lock.Lock()
+	defer product.lock.Unlock()
+
 	newPrice := int(math.Ceil(float64(product.currentPrice) * (1.0 + PriceIncrement)))
 
 	if (newPrice > product.maxPrice()) {
 		product.currentPrice = product.minPrice()
-		crash = &product.ID
+		crash.lock.Lock()
+		crash.ID = &product.ID
+		crash.lock.Unlock()
+
 		go func() {
 			select {
 			case <-time.After(2 * time.Second):
-				if *crash == product.ID {
-					crash = nil
+				crash.lock.Lock()
+				if *crash.ID == product.ID {
+					crash.ID = nil
 				}
+				crash.lock.Unlock()
 			}
 		}()
 		product.Trend = TrendDown
@@ -206,6 +224,9 @@ func (product *Product) IncrPrice() {
 }
 
 func (product *Product) DecrPrice() {
+	product.lock.Lock()
+	defer product.lock.Unlock()
+
 	newPrice := int(math.Floor(float64(product.currentPrice) * (1 - PriceIncrement)))
 
 	minPrice := product.minPrice()
