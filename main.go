@@ -34,6 +34,7 @@ type Product struct {
 	highPrice    int
 	Trend        string
 	lock         sync.RWMutex
+	reset        chan struct{}
 }
 
 type itemResponse struct {
@@ -56,7 +57,7 @@ type priceResponse struct {
 
 type pricesResponse struct {
 	Prices []priceResponse `json:"prices"`
-	Crash  *int            `json:"crash""`
+	Crash  *int            `json:"crash"`
 }
 
 type billEvent struct {
@@ -73,9 +74,8 @@ type billEventProduct struct {
 
 var fakeMenu Menu
 
-
-var crash struct{
-	ID  *int
+var crash struct {
+	ID   *int
 	lock sync.RWMutex
 }
 
@@ -90,8 +90,6 @@ func main() {
 			NewProduct(5, "Budweiser", 480),
 		},
 	}
-
-	go priceDecrementer()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -160,25 +158,32 @@ func main() {
 	}
 }
 
-func priceDecrementer() {
-	ticker := time.NewTicker(time.Minute * ClockPeriodMinutes)
-	for range ticker.C {
-		for _, product := range fakeMenu.Items {
-			product.DecrPrice()
-		}
-	}
-}
-
 func NewProduct(ID int, name string, price int) *Product {
 	initialPrice := int(float64(price) * LowRatio)
-	return &Product{
+	product := &Product{
 		ID:           ID,
 		Name:         name,
 		BasePrice:    price,
 		lowPrice:     initialPrice,
 		currentPrice: initialPrice,
 		highPrice:    initialPrice,
+		reset:        make(chan struct{}),
 	}
+
+	go product.Run()
+
+	return product
+}
+
+func (product *Product) Run() {
+	timer := time.NewTimer(ClockPeriodMinutes * time.Minute)
+	select {
+	case <-timer.C:
+		log.Printf("Decreasing price of %v", product.ID)
+		product.DecrPrice()
+	case <-product.reset:
+	}
+	go product.Run()
 }
 
 func (product *Product) minPrice() int {
@@ -192,6 +197,8 @@ func (product *Product) maxPrice() int {
 func (product *Product) IncrPrice() {
 	product.lock.Lock()
 	defer product.lock.Unlock()
+
+	product.reset <- struct{}{}
 
 	newPrice := int(math.Ceil(float64(product.currentPrice) * (1.0 + PriceIncrement)))
 
