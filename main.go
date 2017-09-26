@@ -187,7 +187,7 @@ func (product *Product) IncrPrice() {
 		crash = &product.ID
 		go func() {
 			select {
-			case <-time.After(1 * time.Second):
+			case <-time.After(2 * time.Second):
 				if *crash == product.ID {
 					crash = nil
 				}
@@ -200,7 +200,7 @@ func (product *Product) IncrPrice() {
 	product.currentPrice = newPrice
 	product.Trend = TrendUp
 
-	if (product.currentPrice > product.highPrice) {
+	if product.currentPrice > product.highPrice {
 		product.highPrice = product.currentPrice
 	}
 }
