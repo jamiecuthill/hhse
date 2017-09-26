@@ -1,0 +1,10 @@
+{
+  "name": "Happy Hour Stock Exchange",
+  "description": "",
+  "keywords": [
+  ],
+  "image": "heroku/go:1.9",
+  "mount_dir": "src/github.com/flypay/hhse",
+  "website": "http://github.com/flypay/hhse",
+  "repository": "http://github.com/flypay/hhse"
+}
