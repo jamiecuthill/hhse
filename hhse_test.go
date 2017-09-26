@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	. "github.com/flypay/hhse"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"net/http"
@@ -162,6 +163,79 @@ var _ = Describe("Hhse", func() {
 						{ "id": 5, "low": "£0.96", "high": "£0.96", "current": "£0.96", "trend": "" }
 					]
 				}`))
+			})
+		})
+	})
+
+	Describe("Menu", func() {
+		var product *Product
+
+		BeforeEach(func() {
+			product = NewProduct(1, "Beer", 100)
+		})
+
+		Describe("Product", func() {
+			Describe("IncrPrice", func() {
+				It("should increase the current price", func() {
+					Expect(product.Current()).To(Equal(20))
+					Expect(product.Low()).To(Equal(product.Current()))
+					Expect(product.High()).To(Equal(product.Current()))
+
+					product.IncrPrice()
+
+					Expect(product.Current()).To(Equal(21))
+					Expect(product.Trend).To(Equal("up"))
+					Expect(product.High()).To(Equal(product.Current()))
+				})
+
+				It("should reset when reaching crash ratio", func() {
+					Eventually(func() bool {
+						product.IncrPrice()
+
+						return product.Current() == product.Low()
+					}).Should(BeTrue())
+
+					Expect(product.Trend).To(Equal("down"))
+				})
+			})
+
+			Describe("DecrPrice", func() {
+				BeforeEach(func() {
+					product.IncrPrice()
+					product.IncrPrice()
+					product.IncrPrice()
+					product.IncrPrice()
+				})
+
+				It("should reduce the current price", func() {
+					Expect(product.Low()).To(Equal(20))
+					Expect(product.Current()).To(Equal(24))
+					Expect(product.High()).To(Equal(product.Current()))
+
+					product.DecrPrice()
+
+					Expect(product.Low()).To(Equal(20))
+					Expect(product.Current()).To(Equal(23))
+					Expect(product.Trend).To(Equal("down"))
+					Expect(product.High()).To(Equal(24))
+				})
+
+				It("should not reduce below lowest possible value", func() {
+					product.DecrPrice()
+					product.DecrPrice()
+					product.DecrPrice()
+					product.DecrPrice()
+					product.DecrPrice()
+					product.DecrPrice()
+					product.DecrPrice()
+					product.DecrPrice()
+					product.DecrPrice()
+
+					Expect(product.Low()).To(Equal(20))
+					Expect(product.Current()).To(Equal(20))
+					Expect(product.Trend).To(Equal(""))
+					Expect(product.High()).To(Equal(24))
+				})
 			})
 		})
 	})

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"github.com/rs/cors"
 	"math"
+	"time"
 )
 
 const LowRatio = 0.2
@@ -17,6 +18,7 @@ const PriceIncrement = 0.04
 const ClockPeriodMinutes = 5
 
 const TrendUp = "up"
+const TrendDown = "down"
 
 type Menu struct {
 	Items []*Product
@@ -80,6 +82,8 @@ func main() {
 		},
 	}
 
+	go priceDecrementer()
+
 	r := mux.NewRouter()
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -141,6 +145,15 @@ func main() {
 	}
 }
 
+func priceDecrementer() {
+	ticker := time.NewTicker(time.Minute * ClockPeriodMinutes)
+	for range ticker.C {
+		for _, product := range fakeMenu.Items {
+			product.DecrPrice()
+		}
+	}
+}
+
 func NewProduct(ID int, name string, price int) *Product {
 	initialPrice := int(float64(price) * LowRatio)
 	return &Product{
@@ -153,14 +166,43 @@ func NewProduct(ID int, name string, price int) *Product {
 	}
 }
 
+func (product *Product) minPrice() int {
+	return int(float64(product.BasePrice) * LowRatio)
+}
+
+func (product *Product) maxPrice() int {
+	return int(float64(product.BasePrice) * CrashRatio)
+}
+
 func (product *Product) IncrPrice() {
-	product.currentPrice = int(math.Ceil(float64(product.currentPrice) * (1.0 + PriceIncrement)))
+	newPrice := int(math.Ceil(float64(product.currentPrice) * (1.0 + PriceIncrement)))
+
+	if (newPrice > product.maxPrice()) {
+		product.currentPrice = product.minPrice()
+		product.Trend = TrendDown
+		return
+	}
+
+	product.currentPrice = newPrice
+	product.Trend = TrendUp
 
 	if (product.currentPrice > product.highPrice) {
 		product.highPrice = product.currentPrice
 	}
+}
 
-	product.Trend = TrendUp
+func (product *Product) DecrPrice() {
+	newPrice := int(math.Floor(float64(product.currentPrice) * (1 - PriceIncrement)))
+
+	minPrice := product.minPrice()
+	if newPrice < minPrice {
+		product.currentPrice = product.minPrice()
+		product.Trend = ""
+		return
+	}
+
+	product.currentPrice = newPrice
+	product.Trend = TrendDown
 }
 
 func (menu Menu) Product(productID int) (*Product, error) {
