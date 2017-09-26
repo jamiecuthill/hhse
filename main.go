@@ -54,6 +54,7 @@ type priceResponse struct {
 
 type pricesResponse struct {
 	Prices []priceResponse `json:"prices"`
+	Crash  *int            `json:"crash""`
 }
 
 type billEvent struct {
@@ -69,6 +70,8 @@ type billEventProduct struct {
 }
 
 var fakeMenu Menu
+
+var crash *int
 
 func main() {
 
@@ -109,6 +112,8 @@ func main() {
 		for _, product := range fakeMenu.Items {
 			p.Prices = append(p.Prices, newPriceResp(*product))
 		}
+
+		p.Crash = crash
 
 		w.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(p)
@@ -179,6 +184,15 @@ func (product *Product) IncrPrice() {
 
 	if (newPrice > product.maxPrice()) {
 		product.currentPrice = product.minPrice()
+		crash = &product.ID
+		go func() {
+			select {
+			case <-time.After(1 * time.Second):
+				if *crash == product.ID {
+					crash = nil
+				}
+			}
+		}()
 		product.Trend = TrendDown
 		return
 	}

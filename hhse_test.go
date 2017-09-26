@@ -78,7 +78,8 @@ var _ = Describe("Hhse", func() {
 					{ "id": 3, "low": "£0.84", "high": "£0.84", "current": "£0.84", "trend": "" },
 					{ "id": 4, "low": "£0.96", "high": "£0.96", "current": "£0.96", "trend": "" },
 					{ "id": 5, "low": "£0.96", "high": "£0.96", "current": "£0.96", "trend": "" }
-				]
+				],
+				"crash": null
 			}`))
 		})
 
@@ -161,7 +162,8 @@ var _ = Describe("Hhse", func() {
 						{ "id": 3, "low": "£0.84", "high": "£0.84", "current": "£0.84", "trend": "" },
 						{ "id": 4, "low": "£0.96", "high": "£0.96", "current": "£0.96", "trend": "" },
 						{ "id": 5, "low": "£0.96", "high": "£0.96", "current": "£0.96", "trend": "" }
-					]
+					],
+					"crash": null
 				}`))
 			})
 		})
