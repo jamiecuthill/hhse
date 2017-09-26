@@ -10,7 +10,10 @@ import (
 )
 
 const LowRatio = 0.2
-const HighRatio = 0.8
+const CrashRatio = 0.8
+const PriceIncrement = 0.04
+const ClockPeriodMinutes = 5
+
 
 type Menu struct {
 	Items []Product
@@ -110,7 +113,7 @@ func (product Product) Current() int {
 }
 
 func (product Product) High() int {
-	return product.Price
+	return product.Low()
 }
 
 func (product Product) Low() int {

@@ -58,11 +58,11 @@ var _ = Describe("Hhse", func() {
 
 			Expect(string(body)).To(MatchJSON(`{
 							"prices": [
-								{ "id": 1, "low": "£1.08", "high": "£5.40", "current": "£1.08", "trend": "" },
-								{ "id": 2, "low": "£0.96", "high": "£4.80", "current": "£0.96", "trend": "" },
-								{ "id": 3, "low": "£0.84", "high": "£4.20", "current": "£0.84", "trend": "" },
-								{ "id": 4, "low": "£0.96", "high": "£4.80", "current": "£0.96", "trend": "" },
-								{ "id": 5, "low": "£0.96", "high": "£4.80", "current": "£0.96", "trend": "" }
+								{ "id": 1, "low": "£1.08", "high": "£1.08", "current": "£1.08", "trend": "" },
+								{ "id": 2, "low": "£0.96", "high": "£0.96", "current": "£0.96", "trend": "" },
+								{ "id": 3, "low": "£0.84", "high": "£0.84", "current": "£0.84", "trend": "" },
+								{ "id": 4, "low": "£0.96", "high": "£0.96", "current": "£0.96", "trend": "" },
+								{ "id": 5, "low": "£0.96", "high": "£0.96", "current": "£0.96", "trend": "" }
 							]
 						}`))
 		})
