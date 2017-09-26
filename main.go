@@ -14,7 +14,6 @@ const CrashRatio = 0.8
 const PriceIncrement = 0.04
 const ClockPeriodMinutes = 5
 
-
 type Menu struct {
 	Items []Product
 }
@@ -50,6 +49,22 @@ type pricesResponse struct {
 
 var fakeMenu Menu
 
+func CORSMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+
+		for _, value := range []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"} {
+			w.Header().Add("Access-Control-Allow-Methods", value)
+		}
+
+		for _, value := range []string{"Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"} {
+			w.Header().Add("Access-Control-Allow-Headers", value)
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 
 	fakeMenu = Menu{
@@ -72,7 +87,7 @@ func main() {
 
 		for _, product := range fakeMenu.Items {
 			m.Items = append(m.Items, itemResponse{
-				ID: product.ID,
+				ID:   product.ID,
 				Name: product.Name,
 			})
 		}
@@ -92,7 +107,7 @@ func main() {
 		json.NewEncoder(w).Encode(p)
 	})
 
-	err := http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), r)
+	err := http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), CORSMiddleware(r))
 	if err != nil {
 		log.Fatal(err)
 	}

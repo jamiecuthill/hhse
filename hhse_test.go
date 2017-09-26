@@ -42,6 +42,19 @@ var _ = Describe("Hhse", func() {
 							]
 						}`))
 		})
+
+		It("should be cors enabled", func() {
+			req, err := http.NewRequest(http.MethodOptions, endpoint("/menu"), nil)
+			Expect(err).NotTo(HaveOccurred())
+
+			resp, err := http.DefaultClient.Do(req)
+			Expect(err).NotTo(HaveOccurred())
+			defer resp.Body.Close()
+
+			Expect(resp.Header["Access-Control-Allow-Origin"]).To(ContainElement("*"))
+			Expect(resp.Header["Access-Control-Allow-Methods"]).To(Equal([]string{"POST", "GET", "OPTIONS", "PUT", "DELETE"}))
+			Expect(resp.Header["Access-Control-Allow-Headers"]).To(Equal([]string{"Origin",  "X-Requested-With", "Content-Type", "Accept", "Authorization"}))
+		})
 	})
 
 	Describe("Prices", func() {
