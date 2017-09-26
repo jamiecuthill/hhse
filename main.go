@@ -34,6 +34,7 @@ func main() {
 			},
 		}
 
+		w.Header().Add("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(menu)
 	})
 

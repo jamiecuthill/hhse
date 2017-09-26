@@ -26,6 +26,7 @@ var _ = Describe("Hhse", func() {
 			defer resp.Body.Close()
 
 			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+			Expect(resp.Header["Content-Type"]).To(ContainElement("application/json"))
 
 			body, err := ioutil.ReadAll(resp.Body)
 			Expect(err).NotTo(HaveOccurred())
